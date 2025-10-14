@@ -14,21 +14,11 @@ public class Organizador extends Usuario {
         super(nId, nName, nCorreo, nLogin, nPasswordH);
     }
     
-    public List<Evento> getEventos() {
-        return eventos;
-    }
-
-    public void setEventos(List<Evento> eventos) {
-        this.eventos = eventos;
-    }
+    public List<Evento> getEventos() { return eventos; }
+    public void setEventos(List<Evento> eventos) { this.eventos = eventos; }
     
-    public List<Oferta> getOfertas() {
-        return ofertas;
-    }
-
-    public void setOfertas(List<Oferta> ofertas) {
-        this.ofertas = ofertas;
-    }
+    public List<Oferta> getOfertas() { return ofertas; }
+    public void setOfertas(List<Oferta> ofertas) { this.ofertas = ofertas; }
     
     public void agregarEvento(Evento evento) {
         this.eventos.add(evento);  
@@ -41,15 +31,17 @@ public class Organizador extends Usuario {
     public void mostrarEventos() {
         System.out.println("Eventos creados por " + this.getName() + ":");
         for (Evento evento : eventos) {
-            System.out.println("- " + evento.getName()); 
+            System.out.println("- " + evento.getNombre()); 
         }
     }
 
     public void mostrarOfertas() {
         System.out.println("Ofertas creadas por " + this.getName() + ":");
         for (Oferta oferta : ofertas) {
-            System.out.println("- " + oferta.getDescripcion());  
+            
+            System.out.println("- " + oferta.getId());  
         }
     }
 }
+
 

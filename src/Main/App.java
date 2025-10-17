@@ -5,8 +5,8 @@ import java.io.*;
 import java.time.*;
 import java.security.SecureRandom;
 import java.util.UUID;
-import java.nio.file.Files;                 // <-- NUEVO
-import java.nio.file.Path;                  // <-- NUEVO
+import java.nio.file.Files;                 
+import java.nio.file.Path;                  
 
 import Enums.*;
 import Eventos.*;
@@ -34,10 +34,10 @@ public class App {
 
   private static Administrador ADMIN;
 
-  // ===================== MAIN =====================
+
   public static void main(String[] args) {
-    boolean cargado = loadSnapshot();   // <-- NUEVO: intenta cargar de disco
-    if (!cargado) {                     // si no hay datos, siembra demo una sola vez
+    boolean cargado = loadSnapshot();   
+    if (!cargado) {                     
       seedDemo();
       snapshot();
     }
@@ -67,7 +67,6 @@ public class App {
     System.out.println("Adiós");
   }
 
-  // ===================== AUTENTICACIÓN =====================
   private static void registrar(){
     sysoLines("", "========== REGISTRO ==========");
     String nombre = readString(">> Nombre completo: ");
@@ -99,7 +98,6 @@ public class App {
     usuariosByCorreo.put(correo, nuevo);
     usuariosByLogin.put(login, nuevo);
 
-    // si es admin real, refleja en ADMIN
     if(nuevo instanceof Administrador a && allowlist.contains(correo)) {
       ADMIN = a;
     }
@@ -133,7 +131,6 @@ public class App {
     else System.out.println("Rol desconocido");
   }
 
-  // ===================== MENÚS / FLUJOS =====================
   private static void menuCliente(Cliente c){
     boolean back=false;
     while(!back){
@@ -484,7 +481,7 @@ public class App {
     }
   }
 
-  // ===================== LECTURAS AUX =====================
+  
   private static TipoDeEvento leerTipoEvento(){
     System.out.println("Tipos de evento:");
     TipoDeEvento[] vals = TipoDeEvento.values();
@@ -551,7 +548,7 @@ public class App {
     return sum % 10 == 0;
   }
 
-  // ===================== PERSISTENCIA =====================
+  
   private static void snapshot(){
     try{ File d = new File(DATA_DIR); if(!d.exists()) d.mkdirs(); } catch(Exception ignored){}
     write("usuarios.json", dumpUsuarios());
@@ -570,7 +567,7 @@ public class App {
     }
   }
 
-  // ------ DUMPS (agregamos pwdHash en usuarios) ------
+  
   private static String dumpUsuarios(){
     StringBuilder sb = new StringBuilder("[\n");
     int i=0;
@@ -659,7 +656,7 @@ public class App {
     return sb.append("\n]\n").toString();
   }
 
-  // ------ LOAD (usuarios) ------
+  
   private static boolean loadSnapshot(){
     try {
       File dir = new File(DATA_DIR);
@@ -674,7 +671,7 @@ public class App {
       usuariosByCorreo.clear();
       usuariosByLogin.clear();
 
-      // extrae objetos { ... } de un array plano
+      
       String inner = json.substring(1, json.length()-1).trim();
       if(inner.isEmpty()) return true;
 
@@ -723,7 +720,7 @@ public class App {
       else if(c=='}') brace--;
       if(brace==0 && (i==inner.length()-1 || (i<inner.length()-1 && inner.charAt(i+1)==','))){
         objetos.add(inner.substring(start, i+1).trim());
-        start = i+2; // salta coma
+        start = i+2; 
       }
     }
     if(start<inner.length()) {
@@ -733,7 +730,6 @@ public class App {
     return objetos;
   }
 
-  // objeto plano tipo {"k":"v","n":123,...}
   private static Map<String,String> parseFlatJsonObject(String obj){
     Map<String,String> out = new HashMap<>();
     String s = obj.trim();
@@ -744,7 +740,7 @@ public class App {
     int q=0, start=0;
     for(int i=0;i<s.length();i++){
       char c=s.charAt(i);
-      if(c=='"') q^=1; // alterna dentro/fuera de comillas
+      if(c=='"') q^=1; 
       if(c==',' && q==0){
         pairs.add(s.substring(start,i).trim());
         start=i+1;

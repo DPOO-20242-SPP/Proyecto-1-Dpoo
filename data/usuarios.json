@@ -1,5 +1,6 @@
 [
-  {"id":"cf082e25-2a37-4ce5-be8b-03b01f7e3b25", "name":"Admin Demo", "correo":"admin.seguro@bm.com", "login":"admin", "rol":"Administrador", "saldoVirtual":0.0},
-  {"id":"2b9f0f81-7c72-422e-9179-e31c4fd25cdf", "name":"Org Demo", "correo":"org.seguro@bm.com", "login":"organizador", "rol":"Organizador", "saldoVirtual":0.0},
-  {"id":"036540e7-685e-4ec8-8b6f-1af6d650163e", "name":"User Demo", "correo":"user@demo.com", "login":"userdemo", "rol":"Cliente", "saldoVirtual":9999.0}
+  {"id":"cf082e25-2a37-4ce5-be8b-03b01f7e3b25", "name":"Admin Demo", "correo":"admin.seguro@bm.com", "login":"admin", "rol":"Administrador", "saldoVirtual":0.0, "pwdHash":"null"},
+  {"id":"1bd16933-4b34-42f4-942e-c0983de898aa", "name":"samantha puentes pinzon", "correo":"samanthapuentes@gmail.com", "login":"sami123", "rol":"Cliente", "saldoVirtual":9.0, "pwdHash":"6f232d88"},
+  {"id":"2b9f0f81-7c72-422e-9179-e31c4fd25cdf", "name":"Org Demo", "correo":"org.seguro@bm.com", "login":"organizador", "rol":"Organizador", "saldoVirtual":0.0, "pwdHash":"null"},
+  {"id":"036540e7-685e-4ec8-8b6f-1af6d650163e", "name":"User Demo", "correo":"user@demo.com", "login":"userdemo", "rol":"Cliente", "saldoVirtual":9999.0, "pwdHash":"null"}
 ]

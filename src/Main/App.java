@@ -5,6 +5,8 @@ import java.io.*;
 import java.time.*;
 import java.security.SecureRandom;
 import java.util.UUID;
+import java.nio.file.Files;                 // <-- NUEVO
+import java.nio.file.Path;                  // <-- NUEVO
 
 import Enums.*;
 import Eventos.*;
@@ -13,9 +15,8 @@ import Transacciones.*;
 import Reembolsos.*;
 import Usuarios.*;
 
-
 public class App {
-  
+
   private static final Scanner in = new Scanner(System.in);
   private static final String DATA_DIR = "data";
 
@@ -31,11 +32,15 @@ public class App {
     "admin.seguro@bm.com", "org.seguro@bm.com"
   ));
 
-  private static Administrador ADMIN; 
+  private static Administrador ADMIN;
 
+  // ===================== MAIN =====================
   public static void main(String[] args) {
-    seedDemo();
-    snapshot();
+    boolean cargado = loadSnapshot();   // <-- NUEVO: intenta cargar de disco
+    if (!cargado) {                     // si no hay datos, siembra demo una sola vez
+      seedDemo();
+      snapshot();
+    }
 
     sysoLines(
       "",
@@ -62,7 +67,7 @@ public class App {
     System.out.println("Adiós");
   }
 
-  
+  // ===================== AUTENTICACIÓN =====================
   private static void registrar(){
     sysoLines("", "========== REGISTRO ==========");
     String nombre = readString(">> Nombre completo: ");
@@ -77,7 +82,7 @@ public class App {
 
     Usuario nuevo = null;
     String id = UUID.randomUUID().toString();
-    String hashCompat = Integer.toHexString(pwd.hashCode()); 
+    String hashCompat = Integer.toHexString(pwd.hashCode()); // simple demo hash
 
     switch(r){
       case 2 -> {
@@ -93,6 +98,12 @@ public class App {
 
     usuariosByCorreo.put(correo, nuevo);
     usuariosByLogin.put(login, nuevo);
+
+    // si es admin real, refleja en ADMIN
+    if(nuevo instanceof Administrador a && allowlist.contains(correo)) {
+      ADMIN = a;
+    }
+
     System.out.println("Registro exitoso: " + nombre + " [" + nuevo.getClass().getSimpleName() + "]");
     snapshot();
   }
@@ -122,7 +133,7 @@ public class App {
     else System.out.println("Rol desconocido");
   }
 
-  
+  // ===================== MENÚS / FLUJOS =====================
   private static void menuCliente(Cliente c){
     boolean back=false;
     while(!back){
@@ -136,7 +147,7 @@ public class App {
         "3) Transferir tiquete",
         "4) Solicitar reembolso (calamidad)",
         "5) Ver saldo e historial",
-        "6) Recargar saldo",               
+        "6) Recargar saldo",
         "0) Cerrar sesión"
       );
       int op = readInt(">> Opción: ");
@@ -147,7 +158,7 @@ public class App {
           case 3 -> flujoTransferencia(c);
           case 4 -> flujoReembolsoCalamidad(c);
           case 5 -> verSaldoEI(c);
-          case 6 -> flujoRecargaSaldo(c);  
+          case 6 -> flujoRecargaSaldo(c);
           case 0 -> back=true;
           default -> System.out.println("Opción inválida");
         }
@@ -192,7 +203,6 @@ public class App {
     String conf = readString(">> Confirmar (s/n): ");
     if(!conf.equalsIgnoreCase("s")) return;
 
-    
     List<Tiquete> items = new ArrayList<>();
     for(int i=0;i<qty;i++){
       String id = UUID.randomUUID().toString();
@@ -205,7 +215,6 @@ public class App {
     }
     e.setTiquetesVendidos(e.getTiquetesVendidos()+qty);
 
-    
     Transaccion tx = new Transaccion(UUID.randomUUID().toString(), c, null);
     tx.setMedioPago(MedioPago.SaldoVirtual);
     for(Tiquete it: items) tx.agregarTiquete(it);
@@ -213,7 +222,6 @@ public class App {
     tx.setContabilizaIngreso(true);
     transacciones.add(tx);
 
-    
     c.setSaldoVirtual(c.getSaldoVirtual()-total);
 
     System.out.println("Compra ok. Generados "+qty+" tiquetes");
@@ -263,7 +271,6 @@ public class App {
     System.out.println("Transacciones: "+transacciones.size());
   }
 
-  
   private static void flujoRecargaSaldo(Cliente c) {
     sysoLines(
       "",
@@ -272,7 +279,6 @@ public class App {
       "------------------------------------------"
     );
 
-    
     String tarjeta = readString(">> Número de tarjeta (16 dígitos, sin espacios): ");
     if (!tarjeta.matches("\\d{16}")) {
       System.out.println("Formato inválido. Debe tener exactamente 16 dígitos.");
@@ -283,14 +289,12 @@ public class App {
       return;
     }
 
-    
     String ccv = readString(">> CCV (3 dígitos): ");
     if (!ccv.matches("\\d{3}")) {
       System.out.println("CCV inválido. Debe tener 3 dígitos.");
       return;
     }
 
-    
     String mm = readString(">> Mes de expiración (MM): ");
     String yyyy = readString(">> Año de expiración (YYYY): ");
     if (!mm.matches("\\d{2}") || !yyyy.matches("\\d{4}")) {
@@ -303,7 +307,7 @@ public class App {
       System.out.println("Mes inválido (01..12).");
       return;
     }
-    
+
     YearMonth hoy = YearMonth.now();
     YearMonth exp = YearMonth.of(anio, mes);
     if (exp.isBefore(hoy)) {
@@ -311,14 +315,12 @@ public class App {
       return;
     }
 
-    
     double monto = readDouble(">> Monto a recargar (>= 1.0): ");
     if (monto < 1.0) {
       System.out.println("El monto mínimo es 1.0");
       return;
     }
 
-    
     String last4 = tarjeta.substring(12);
     System.out.println("Vas a recargar $" + round2(monto) + " a tu saldo.");
     String conf = readString(">> Confirmar recarga a la tarjeta **** **** **** " + last4 + " (s/n): ");
@@ -327,25 +329,20 @@ public class App {
       return;
     }
 
-    
     c.setSaldoVirtual(c.getSaldoVirtual() + monto);
     System.out.println("Recarga exitosa. Nuevo saldo: $" + round2(c.getSaldoVirtual()));
 
-    
     try {
       Transaccion tx = new Transaccion(UUID.randomUUID().toString(), c, null);
-      tx.setMedioPago(MedioPago.Tarjeta);  
+      tx.setMedioPago(MedioPago.Tarjeta);
       tx.calcularTotales(monto, 0.0, 0.0, 0.0);
-      tx.setContabilizaIngreso(false); 
+      tx.setContabilizaIngreso(false);
       transacciones.add(tx);
-    } catch (Exception ignored) {
-      
-    }
+    } catch (Exception ignored) { }
 
-    snapshot(); 
+    snapshot();
   }
 
-  
   private static void menuOrganizador(Organizador o){
     boolean back=false;
     while(!back){
@@ -411,7 +408,6 @@ public class App {
     }
   }
 
-  
   private static void menuAdmin(Administrador a){
     boolean back=false;
     while(!back){
@@ -488,7 +484,7 @@ public class App {
     }
   }
 
-  
+  // ===================== LECTURAS AUX =====================
   private static TipoDeEvento leerTipoEvento(){
     System.out.println("Tipos de evento:");
     TipoDeEvento[] vals = TipoDeEvento.values();
@@ -507,7 +503,6 @@ public class App {
   }
 
   private static void seedDemo(){
-    
     ADMIN = new Administrador(UUID.randomUUID().toString(), "Admin Demo", "admin.seguro@bm.com", "admin", Integer.toHexString("Admin#2025".hashCode()));
     ADMIN.setPorcentajeServicioGeneral(0.10);
     ADMIN.setCostoEmisionFijo(2.5);
@@ -541,7 +536,6 @@ public class App {
   private static double round2(double x){ return Math.round(x*100.0)/100.0; }
   private static void sysoLines(String... ls){ for(String s: ls) System.out.println(s); }
 
-  
   private static boolean luhnOk(String number) {
     int sum = 0;
     boolean alt = false;
@@ -557,7 +551,7 @@ public class App {
     return sum % 10 == 0;
   }
 
-  
+  // ===================== PERSISTENCIA =====================
   private static void snapshot(){
     try{ File d = new File(DATA_DIR); if(!d.exists()) d.mkdirs(); } catch(Exception ignored){}
     write("usuarios.json", dumpUsuarios());
@@ -567,18 +561,208 @@ public class App {
     write("transacciones.json", dumpTransacciones());
     write("reembolsos.json", dumpReembolsos());
   }
+
   private static void write(String name, String content){
-    try(FileWriter fw = new FileWriter(new File(DATA_DIR, name))){ fw.write(content); } catch(Exception e){ System.out.println("No se pudo escribir "+name+": "+e.getMessage()); }
+    try(FileWriter fw = new FileWriter(new File(DATA_DIR, name))){
+      fw.write(content);
+    } catch(Exception e){
+      System.out.println("No se pudo escribir "+name+": "+e.getMessage());
+    }
   }
+
+  // ------ DUMPS (agregamos pwdHash en usuarios) ------
   private static String dumpUsuarios(){
-    StringBuilder sb = new StringBuilder("[\n"); int i=0; for(Usuario u: usuariosByCorreo.values()){ if(i++>0) sb.append(",\n");
-      sb.append("  {\"id\":\"").append(u.getId()).append("\", \"name\":\"").append(u.getName()).append("\", \"correo\":\"").append(u.getCorreo()).append("\", \"login\":\"").append(u.getLogin()).append("\", \"rol\":\"").append(u.getClass().getSimpleName()).append("\", \"saldoVirtual\":").append(round2(u.getSaldoVirtual())).append("}"); }
+    StringBuilder sb = new StringBuilder("[\n");
+    int i=0;
+    for(Usuario u: usuariosByCorreo.values()){
+      if(i++>0) sb.append(",\n");
+      sb.append("  {\"id\":\"").append(u.getId())
+        .append("\", \"name\":\"").append(u.getName())
+        .append("\", \"correo\":\"").append(u.getCorreo())
+        .append("\", \"login\":\"").append(u.getLogin())
+        .append("\", \"rol\":\"").append(u.getClass().getSimpleName())
+        .append("\", \"saldoVirtual\":").append(round2(u.getSaldoVirtual()))
+        .append(", \"pwdHash\":\"").append(u.getPasswordH()).append("\"}")
+      ;
+    }
     return sb.append("\n]\n").toString();
   }
-  private static String dumpVenues(){ StringBuilder sb=new StringBuilder("[\n"); int i=0; for(Venue v: venues){ if(i++>0) sb.append(",\n"); sb.append("  {\"id\":\"").append(v.getId()).append("\", \"nombre\":\"").append(v.getNombre()).append("\", \"direccion\":\"").append(v.getDireccion()).append("\", \"capacidadMaxima\":").append(v.getCapacidadMaxima()).append(", \"aprobado\":").append(v.isAprobado()).append("}"); } return sb.append("\n]\n").toString(); }
-  private static String dumpEventos(){ StringBuilder sb=new StringBuilder("[\n"); int i=0; for(Evento e: eventos){ if(i++>0) sb.append(",\n"); sb.append("  {\"id\":\"").append(e.getId()).append("\", \"nombre\":\"").append(e.getNombre()).append("\", \"tipo\":\"").append(e.getTipo()).append("\", \"venue\":\"").append(e.getVenue().getNombre()).append("\", \"cancelado\":").append(e.isCancelado()).append(", \"localidades\":"); sb.append("["); for(int j=0;j<e.getLocalidades().size();j++){ Localidad l=e.getLocalidades().get(j); if(j>0) sb.append(","); sb.append("{\"nombre\":\"").append(l.getNombre()).append("\", \"precio\":").append(round2(l.getPrecioPublico())).append(", \"capacidad\":").append(l.getCapacidad()).append("}"); } sb.append("]}"); } return sb.append("\n]\n").toString(); }
-  private static String dumpTiquetes(){ StringBuilder sb=new StringBuilder("[\n"); int i=0; for(Tiquete t: tiquetes){ if(i++>0) sb.append(",\n"); sb.append("  {\"id\":\"").append(t.getId()).append("\", \"evento\":\"").append(t.getEvento().getNombre()).append("\", \"localidad\":\"").append(t.getLocalidad().getNombre()).append("\", \"estado\":\"").append(t.getEstado()).append("\", \"owner\":\"").append(t.getPropietarioActual()!=null?t.getPropietarioActual().getCorreo():"null").append("\"}"); } return sb.append("\n]\n").toString(); }
-  private static String dumpTransacciones(){ StringBuilder sb=new StringBuilder("[\n"); int i=0; for(Transaccion t: transacciones){ if(i++>0) sb.append(",\n"); sb.append("  {\"id\":\"").append(t.getId()).append("\", \"cliente\":\"").append(t.getCliente().getCorreo()).append("\", \"items\":").append(t.getItems().size()).append("}\n"); } return sb.append("]\n").toString(); }
-  private static String dumpReembolsos(){ StringBuilder sb=new StringBuilder("[\n"); int i=0; for(Reembolso r: reembolsos){ if(i++>0) sb.append(",\n"); sb.append("  {\"id\":\"").append(r.getId()).append("\", \"estado\":\"").append(r.getEstado()).append("\", \"motivo\":\"").append(r.getMotivo()).append("\"}"); } return sb.append("\n]\n").toString(); }
+
+  private static String dumpVenues(){
+    StringBuilder sb=new StringBuilder("[\n");
+    int i=0; for(Venue v: venues){
+      if(i++>0) sb.append(",\n");
+      sb.append("  {\"id\":\"").append(v.getId())
+        .append("\", \"nombre\":\"").append(v.getNombre())
+        .append("\", \"direccion\":\"").append(v.getDireccion())
+        .append("\", \"capacidadMaxima\":").append(v.getCapacidadMaxima())
+        .append(", \"aprobado\":").append(v.isAprobado()).append("}");
+    }
+    return sb.append("\n]\n").toString();
+  }
+
+  private static String dumpEventos(){
+    StringBuilder sb=new StringBuilder("[\n");
+    int i=0; for(Evento e: eventos){
+      if(i++>0) sb.append(",\n");
+      sb.append("  {\"id\":\"").append(e.getId())
+        .append("\", \"nombre\":\"").append(e.getNombre())
+        .append("\", \"tipo\":\"").append(e.getTipo())
+        .append("\", \"venue\":\"").append(e.getVenue().getNombre())
+        .append("\", \"cancelado\":").append(e.isCancelado())
+        .append(", \"localidades\":");
+      sb.append("[");
+      for(int j=0;j<e.getLocalidades().size();j++){
+        Localidad l=e.getLocalidades().get(j);
+        if(j>0) sb.append(",");
+        sb.append("{\"nombre\":\"").append(l.getNombre())
+          .append("\", \"precio\":").append(round2(l.getPrecioPublico()))
+          .append(", \"capacidad\":").append(l.getCapacidad()).append("}");
+      }
+      sb.append("]}");
+    }
+    return sb.append("\n]\n").toString();
+  }
+
+  private static String dumpTiquetes(){
+    StringBuilder sb=new StringBuilder("[\n");
+    int i=0; for(Tiquete t: tiquetes){
+      if(i++>0) sb.append(",\n");
+      sb.append("  {\"id\":\"").append(t.getId())
+        .append("\", \"evento\":\"").append(t.getEvento().getNombre())
+        .append("\", \"localidad\":\"").append(t.getLocalidad().getNombre())
+        .append("\", \"estado\":\"").append(t.getEstado())
+        .append("\", \"owner\":\"").append(t.getPropietarioActual()!=null?t.getPropietarioActual().getCorreo():"null").append("\"}");
+    }
+    return sb.append("\n]\n").toString();
+  }
+
+  private static String dumpTransacciones(){
+    StringBuilder sb=new StringBuilder("[\n");
+    int i=0; for(Transaccion t: transacciones){
+      if(i++>0) sb.append(",\n");
+      sb.append("  {\"id\":\"").append(t.getId())
+        .append("\", \"cliente\":\"").append(t.getCliente().getCorreo())
+        .append("\", \"items\":").append(t.getItems().size()).append("}\n");
+    }
+    return sb.append("]\n").toString();
+  }
+
+  private static String dumpReembolsos(){
+    StringBuilder sb=new StringBuilder("[\n");
+    int i=0; for(Reembolso r: reembolsos){
+      if(i++>0) sb.append(",\n");
+      sb.append("  {\"id\":\"").append(r.getId())
+        .append("\", \"estado\":\"").append(r.getEstado())
+        .append("\", \"motivo\":\"").append(r.getMotivo()).append("\"}");
+    }
+    return sb.append("\n]\n").toString();
+  }
+
+  // ------ LOAD (usuarios) ------
+  private static boolean loadSnapshot(){
+    try {
+      File dir = new File(DATA_DIR);
+      if(!dir.exists()) return false;
+
+      File fUsers = new File(dir, "usuarios.json");
+      if(!fUsers.exists()) return false;
+
+      String json = Files.readString(Path.of(fUsers.getAbsolutePath())).trim();
+      if(json.length()<2 || json.charAt(0)!='[') return false;
+
+      usuariosByCorreo.clear();
+      usuariosByLogin.clear();
+
+      // extrae objetos { ... } de un array plano
+      String inner = json.substring(1, json.length()-1).trim();
+      if(inner.isEmpty()) return true;
+
+      List<String> objetos = splitTopLevelObjects(inner);
+
+      for(String obj : objetos){
+        Map<String,String> m = parseFlatJsonObject(obj);
+
+        String id     = m.get("id");
+        String name   = m.get("name");
+        String correo = m.get("correo");
+        String login  = m.get("login");
+        String rol    = m.get("rol");
+        String pwd    = m.get("pwdHash");
+        double saldo  = Double.parseDouble(m.getOrDefault("saldoVirtual","0"));
+
+        Usuario nuevo;
+        switch(rol){
+          case "Administrador" -> nuevo = new Administrador(id, name, correo, login, pwd);
+          case "Organizador"   -> nuevo = new Organizador(id, name, correo, login, pwd);
+          default              -> nuevo = new Cliente(id, name, correo, login, pwd);
+        }
+        nuevo.setSaldoVirtual(saldo);
+
+        usuariosByCorreo.put(correo, nuevo);
+        usuariosByLogin.put(login, nuevo);
+
+        if("Administrador".equals(rol) && allowlist.contains(correo)){
+          ADMIN = (Administrador) nuevo;
+        }
+      }
+      return true;
+
+    } catch(Exception e){
+      System.out.println("No se pudo cargar snapshot: "+e.getMessage());
+      return false;
+    }
+  }
+
+  private static List<String> splitTopLevelObjects(String inner){
+    List<String> objetos = new ArrayList<>();
+    int brace=0, start=0;
+    for(int i=0;i<inner.length();i++){
+      char c = inner.charAt(i);
+      if(c=='{') brace++;
+      else if(c=='}') brace--;
+      if(brace==0 && (i==inner.length()-1 || (i<inner.length()-1 && inner.charAt(i+1)==','))){
+        objetos.add(inner.substring(start, i+1).trim());
+        start = i+2; // salta coma
+      }
+    }
+    if(start<inner.length()) {
+      String rem = inner.substring(start).trim();
+      if(!rem.isEmpty()) objetos.add(rem);
+    }
+    return objetos;
+  }
+
+  // objeto plano tipo {"k":"v","n":123,...}
+  private static Map<String,String> parseFlatJsonObject(String obj){
+    Map<String,String> out = new HashMap<>();
+    String s = obj.trim();
+    if(s.startsWith("{")) s = s.substring(1);
+    if(s.endsWith("}")) s = s.substring(0, s.length()-1);
+
+    List<String> pairs = new ArrayList<>();
+    int q=0, start=0;
+    for(int i=0;i<s.length();i++){
+      char c=s.charAt(i);
+      if(c=='"') q^=1; // alterna dentro/fuera de comillas
+      if(c==',' && q==0){
+        pairs.add(s.substring(start,i).trim());
+        start=i+1;
+      }
+    }
+    if(start < s.length()) pairs.add(s.substring(start).trim());
+
+    for(String p : pairs){
+      int sep = p.indexOf(':');
+      if(sep<0) continue;
+      String k = p.substring(0,sep).trim();
+      String v = p.substring(sep+1).trim();
+      if(k.startsWith("\"") && k.endsWith("\"")) k = k.substring(1,k.length()-1);
+      if(v.startsWith("\"") && v.endsWith("\"")) v = v.substring(1,v.length()-1);
+      out.put(k, v);
+    }
+    return out;
+  }
 }
+
 

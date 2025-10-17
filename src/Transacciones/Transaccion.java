@@ -52,7 +52,7 @@ public class Transaccion {
         items.add(tiquete);
     }
 
-    public void calcularTotales(double porcentajeServicio, double costoEmisionFijo, double descuentoAplicado) {
+    public void calcularTotales(double porcentajeServicio, double costoEmisionFijo, double descuentoAplicado, double d) {
         subtotal = 0.0;
         for (Tiquete t : items) {
             subtotal += t.getPrecioBase();  

@@ -1,0 +1,3 @@
+[
+  {"id":"a8a2005d-ff9f-410f-b953-b675b247b3eb", "nombre":"Rock Fest", "tipo":"Musical", "venue":"Coliseo Central", "cancelado":false, "localidades":[{"nombre":"General", "precio":80.0, "capacidad":200}]}
+]

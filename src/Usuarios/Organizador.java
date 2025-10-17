@@ -10,7 +10,7 @@ public class Organizador extends Usuario {
     private List<Evento> eventos = new ArrayList<Evento>();  
     private List<Oferta> ofertas = new ArrayList<Oferta>();      
  
-    protected Organizador(String nId, String nName, String nCorreo, String nLogin, String nPasswordH) {
+    public Organizador(String nId, String nName, String nCorreo, String nLogin, String nPasswordH) {
         super(nId, nName, nCorreo, nLogin, nPasswordH);
     }
     

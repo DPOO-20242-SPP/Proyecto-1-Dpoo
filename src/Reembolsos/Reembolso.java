@@ -5,6 +5,7 @@ package Reembolsos;
 import java.time.LocalDateTime;
 import Tiquetes.Tiquete;
 import Usuarios.Administrador;
+import Usuarios.Cliente;
 import Usuarios.Usuario;
 
 public class Reembolso {
@@ -22,7 +23,7 @@ public class Reembolso {
     private LocalDateTime fechaSolicitud = LocalDateTime.now();
     private LocalDateTime fechaResolucion; 
 
-    public Reembolso(String id, Usuario solicitante, Tiquete tiqueteAReembolsar, String motivo) {
+    public Reembolso(String id, Usuario solicitante, Cliente c, Tiquete tiqueteAReembolsar, double d, double e, double f, double g, String motivo, String string, LocalDateTime localDateTime) {
         this.id = id;
         this.solicitante = solicitante;
         this.tiqueteAReembolsar = tiqueteAReembolsar;
@@ -152,4 +153,9 @@ public class Reembolso {
                ", fechaResolucion=" + fechaResolucion +
                '}';
     }
+
+	public void setEstado(String string) {
+		// TODO Auto-generated method stub
+		
+	}
 }

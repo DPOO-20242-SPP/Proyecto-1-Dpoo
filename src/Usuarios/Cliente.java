@@ -10,7 +10,7 @@ public class Cliente extends Usuario {
     private List<Transaccion> transacciones = new ArrayList<>();
     private List<Tiquete> tiquetes = new ArrayList<>();
     
-    protected Cliente(String nId, String nName, String nCorreo, String nLogin, String nPasswordH) {
+    public Cliente(String nId, String nName, String nCorreo, String nLogin, String nPasswordH) {
         super(nId, nName, nCorreo, nLogin, nPasswordH);
     }
 

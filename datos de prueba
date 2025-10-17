@@ -1,0 +1,23 @@
+Administrador
+Nombre: Admin Demo
+Correo: admin.seguro@bm.com
+Login: admin
+Contraseña (en texto plano para ingresar): Admin#2025
+2FA: al iniciar sesión te muestra un PIN en consola; cópialo tal cual.
+
+//////////////////////////////////////////////////////////////////////////
+
+Organizador
+Nombre: Org Demo
+Correo: org.seguro@bm.com
+Login: organizador
+Contraseña: Org#2025
+2FA: igual que el admin (PIN en consola).
+
+////////////////////////////////////////////////////////////////////////////
+
+(Extra) Cliente demo
+Nombre: User Demo
+Correo: user@demo.com
+Login: userdemo
+Contraseña: User#2025
